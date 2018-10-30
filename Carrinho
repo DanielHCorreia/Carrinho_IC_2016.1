@@ -1,0 +1,298 @@
+#include "Ultrasonic.h"
+
+#define echoPin 2 //Pino 7 recebe o pulso do echo
+#define trigPin 4 //Pino 8 envia o pulso para gerar o echo
+
+//iniciando a função e passando os pinos
+Ultrasonic ultrasonic(4,2);
+
+//definindo o buzzer 
+int buzzer=3;
+
+//definicoes do sensor de linha
+int inPin = 9; //pino de entrada no sensor
+int valor = 0; //Inteiro que armazena o valor lido
+
+//Definicoes pinos Galileo ligados a entrada da Ponte H
+int IN1 = 11;
+int IN2 = 10;
+int IN3 = 6;
+int IN4 = 5;
+
+
+ int preto=0;
+ int x=1;
+ int primeiro=0;
+void setup(){
+// buzzer
+  pinMode(buzzer,OUTPUT);
+//Sensor optico
+
+   Serial.begin(9600); //inicializando a porta serial
+   pinMode(inPin, INPUT); //colocando a porta 12 como entrada
+//Motores
+
+  pinMode(IN1, OUTPUT);//esquerdo frente
+  pinMode(IN2, OUTPUT);//esquerdo trás
+  pinMode(IN3, OUTPUT);//direito trás
+  pinMode(IN4, OUTPUT); //direito frente
+//sensor ultrassonico
+
+  pinMode(echoPin, INPUT); // define o pino 7 como entrada (recebe)
+  pinMode(trigPin, OUTPUT); // define o pino 8 como saida (envia)
+}
+
+void andarFrente(){
+      analogWrite(IN3, 0);
+      analogWrite(IN4, 100);
+      analogWrite(IN2, 0);
+      analogWrite(IN1, 100);
+}
+
+void pararFrente(){
+  
+  analogWrite(IN2, 0);
+  analogWrite(IN1, 0);
+  analogWrite(IN3,0);
+  analogWrite(IN4,0);
+  
+}
+
+
+void andarEsquerda(){
+  
+      analogWrite(IN3, 0);
+      analogWrite(IN4, 200);
+      
+  
+}
+
+
+void andarDireita(){
+  
+    analogWrite(IN2, 0);
+    analogWrite(IN1, 70);
+   
+  
+}
+
+void pararEsquerda(){
+  
+  analogWrite(IN2, 0);
+  analogWrite(IN1, 0);
+}
+
+
+void pararDireita(){
+  analogWrite(IN3,0);
+  analogWrite(IN4,0);
+}
+
+
+
+void anda(){// inicia no branco, e vai para a esquerda
+ // colisao();
+       valor = digitalRead(inPin);//realizando a leitura no sensor optico
+ 
+    if (valor == HIGH){ // Se branco
+       Serial.write("branco\n"); //caso o valor seja alto - cor branca
+       
+       andarEsquerda();
+       delay(30);
+       pararEsquerda();
+    }
+    else{ //Se preto
+      Serial.write("preto\n"); //caso o valor lido seja baixo - cor preta
+
+    andarDireita();  
+    delay(30);
+    pararDireita();
+   
+       
+}
+}
+
+
+int andaNovo(){
+  //delay(500);
+ valor = digitalRead(inPin);
+  
+  
+ if(valor == HIGH){//se branco
+
+  if(primeiro==0){
+  Serial.write("branco0\n"); //caso o valor seja alto - cor branca
+      pararFrente();
+      // pararEsquerda();
+       andarEsquerda(); //VA PARA ESQUERDA
+      x= 1;
+   //    pararEsquerda();
+   
+
+  }if(primeiro ==1){ //primeiro ==1 && x=0
+Serial.write("branco1\n"); //caso o valor seja alto - cor branca
+   pararFrente();
+//   pararEsquerda();
+   andarDireita();  // VA PARA DIREITA
+    x=0;
+ //   pararDireita();
+ 
+  
+  }
+
+
+
+ }// fim high
+ 
+ 
+ 
+ 
+ 
+  if(valor==LOW){ // SE PRETO
+
+if(x==1){ // se estou indo para direita (no preto)
+x=1;
+
+
+primeiro=1;
+Serial.write("preto0\n"); //caso o valor lido seja baixo - cor preta
+
+}else if( x== 0){ // se estou indo para a esquerda (no preto)
+primeiro=0;
+x=0;
+Serial.write("preto1\n"); //caso o valor lido seja baixo - cor preta
+}
+
+
+
+
+ } 
+ 
+
+
+
+}
+
+
+
+void Checar(){
+  
+  valor = digitalRead(inPin);
+  
+  
+  
+  
+  
+ 
+
+  
+  
+  
+}
+
+
+
+void loop(){
+   
+delay(40);
+andaNovo();
+Checar();    
+}
+ 
+void colisao(){
+  int espera=0;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  int distancia = (ultrasonic.Ranging(CM));
+  delay(10);
+   Serial.println(distancia);
+   
+   
+   
+  if(distancia<=10){
+     espera=parada();
+       if(espera==1){ //então há objeto
+         desvia();//ainda falta fazer
+     } //  else então não há mais objeto;
+  }//fim if
+  
+}// fim colisao
+void desvia(){
+  //faça a rotina de desvio aqui!! 
+  andarDireita();
+  delay(600);
+  pararDireita();
+  
+  andarFrente();
+  delay(900);
+  pararFrente();
+  
+  andarEsquerda();
+  delay(400);
+  pararEsquerda();
+  
+  andarFrente();
+  delay(400);
+  pararFrente();
+  
+  andarEsquerda();
+  delay(600);
+  pararEsquerda();
+  
+  andarFrente();
+  delay(850);
+  pararFrente();
+  
+  
+}
+
+int parada(){
+  //acionar buzer com som de buzina biuur
+  for(int i=0;i<2;i++){
+  tone(buzzer,2500);
+  delay(750);
+  noTone(buzzer);
+  delay(300);
+  }
+  //piscar os farois (opcional)
+  
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  int distancia = (ultrasonic.Ranging(CM));
+  delay(1000);
+  Serial.println(distancia);
+  if(distancia<=10){
+    return 1;// se ainda há objeto
+  }
+  else{
+    return 0; // se não há objeto
+  }
+  
+}
+/*
+//seta o pino 12 com um pulso baixo "LOW" ou desligado ou ainda 0
+digitalWrite(trigPin, LOW);
+// delay de 2 microssegundos
+delayMicroseconds(2);
+//seta o pino 12 com pulso alto "HIGH" ou ligado ou ainda 1
+digitalWrite(trigPin, HIGH);
+//delay de 10 microssegundos
+delayMicroseconds(10);
+//seta o pino 12 com pulso baixo novamente
+digitalWrite(trigPin, LOW);
+// função Ranging, faz a conversão do tempo de
+//resposta do echo em centimetros, e armazena
+//na variavel distancia
+int distancia = (ultrasonic.Ranging(CM));
+Serial.print("Distancia em CM: ");
+Serial.println(distancia);
+delay(1000); //espera 1 segundo para fazer a leitura
+
+*/
